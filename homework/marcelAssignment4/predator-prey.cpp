@@ -24,17 +24,17 @@ float predDist[numBoids];
 
 
 struct MyApp : public al::App {
-    al::Mesh mesh;
-    al::Nav predator[numPred], boid[numBoids]; // Nav is a frame of refence in  space that can be moved / animated.
+    Mesh mesh;
+    Nav predator[numPred], boid[numBoids]; // Nav is a frame of refence in  space that can be moved / animated.
     Vec3f heading[numBoids], food[numFood], cohesion, separation, evasion;
 
-    Parameter fov{"Field of View", "", 0.015, 0.01, 0.1};
+    Parameter fov{"Field of View", "", 0.015, 0.01, 4.0};
     Parameter personalSpace{"Personal Space", "", 3.0, 0.01, 4.0};
     Parameter turnRate{"Turn Rate", "", 0.05, 0.01, 0.1};
     Parameter moveRate{"Move Rate", "", 0.02, 0.01, 0.1};
-    Parameter evasionWeight{"Evasion Weight", "", 2.0, 0.01, 2.0};
-    Parameter separationWeight{"Separation Weight", "", 1.0, 0.01, 2.0};
-    Parameter cohesionWeight{"Cohesion Weight", "", 1.0, 0.01, 2.0};
+    Parameter evasionWeight{"Evasion Weight", "", 2.0, 0.01, 4.0};
+    Parameter separationWeight{"Separation Weight", "", 1.0, 0.01, 4.0};
+    Parameter cohesionWeight{"Cohesion Weight", "", 1.0, 0.01, 4.0};
 
     Material material;     // Necessary for specular highlights
     Light light;
