@@ -22,10 +22,11 @@
 // 1. A neural network model will receive a two dimensional integer on it's input, and output interpolations between multiple states of the synthesizer's parameters.
 // 2. The neural network will send the output to the synthesizer via OSC.
 //
-// For the AlloSphere demo, the following should be prepared:
-// Metaball cluster floating around the three dimensional space.
-// Sine wave following it spatially.
-
+// TO DO NEXT:
+// 1. Create a class which contains a nav for the position of the cluster.
+// 2. Make it orbit around the viewer.
+// 3. Create a class for each sphere within the cluster.
+// 4. Make the spheres oscillate.
 
 // Libraries:
 #include "al/app/al_DistributedApp.hpp" // For distributing tasks across multiple machines in AlloSphere.
@@ -127,6 +128,7 @@ struct RayApp : public DistributedAppWithState<State> {
     g.clear(0); // Clear the graphics buffer.
     clusters.use(); // Use the raymarched shader program.
     clusters
+    .uniform("cam_pos", nav().pos()) // Position of the camera.
     .uniform("foc_len", g.lens().focalLength()) // Focal length of the lens.
     .uniform("eye_sep", g.lens().eyeSep() * g.eye() / 2.0f) // Eye separation.
     .uniform("al_ProjMatrixInv", Matrix4f::inverse(g.projMatrix())) // Pass the inverse projection matrix to the shader.

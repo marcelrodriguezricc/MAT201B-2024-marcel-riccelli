@@ -2,6 +2,7 @@
 
 // Variables rom the Application:
 uniform float time; // The time our application has been running.
+uniform vec3 cam_pos;
 
 // Internal Variables:
 float step_size = 0.01; // The distance each ray of light travels per step.
@@ -73,8 +74,9 @@ vec3 lighting(float d, vec3 r_o, vec3 r_d){
   float surface = d; // The distance to the surface.
   vec3 rayOrigin = r_o; // The origin of the ray.
   vec3 rayDir = r_d; // The direction of the ray.
+  vec3 lightPos = cam_pos; // The position of the light source, which will be the same as our camera nav.
 	vec3 n = getNormals(surface, rayOrigin, rayDir); // Get the normals of the objects.
-	vec3 l = normalize(vec3(0.0, 0.0, 5.0)); // The direction of the light source.
+	vec3 l = normalize(lightPos); // The direction of the light source.
 	//vec3 rd = rayDir;
 	vec3 r = reflect(l, n); // The reflection of the light off of the normal.
 	vec3 kd = vec3(1.0, 1.0, 1.0); // The diffuse reflection coefficient, or the color of surface.
