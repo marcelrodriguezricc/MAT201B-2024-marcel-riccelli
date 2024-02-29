@@ -57,10 +57,8 @@ struct RayApp : public DistributedAppWithState<State> {
 
   // GUI Parameters:
   ControlGUI *gui; // GUI for controlling uniform parameters.
-  Parameter clusterPos{"Cluster Position", "Clusters", 0.1, 0.0, 10.0}; // The position of the cluster.
+  Parameter orbitSpeed{"orbitSpeed", "Clusters", 0.1, 0.0, 10.0}; // The position of the cluster.
   Parameter fundamental{"Fundamental", "Oscillators", 220.0, 20.0, 20000.0}; // The fundamental frequency of the sine wave synthesizer.
-  ParameterInt maxSteps{"Max Steps", "Raymarching", 1024, 16, 2048};
-  Parameter stepSize{"Step Size", "Raymarching", 0.02, 0.01, 0.1};
   Parameter eyeSep{"Eye Separation", "Raymarching", 0.02, 0., 0.5};
   Parameter focalLength{"Focal Length", "Raymarching", 0.02, 0., 0.5};
   Parameter lightPos{"Light Position", "Raymarching", 0.02, 0., 0.5};
@@ -97,11 +95,11 @@ struct RayApp : public DistributedAppWithState<State> {
   if (isPrimary()) {
     auto guiDomain = GUIDomain::enableGUI(defaultWindowDomain()); // Enable the GUI.
     gui = &guiDomain->newGUI(); // Create the GUI
-    *gui << clusterPos << fundamental; // Assign our parameters to the GUI.
+    *gui << orbitSpeed << fundamental; // Assign our parameters to the GUI.
   }
 
-  parameterServer() << clusterPos << fundamental; // Make parameters accessible via OSC.
-  nav().pos(0,0,0); // Set the camera position at the center of the 3D space.
+  parameterServer() << orbitSpeed << fundamental; // Make parameters accessible via OSC.
+  nav().pos(0,0,5); // Set the camera position at the center of the 3D space.
   reloadShaders(); // Load the shader files.
   }  
 
@@ -128,22 +126,12 @@ struct RayApp : public DistributedAppWithState<State> {
   void onDraw(Graphics &g) override {
     g.clear(0); // Clear the graphics buffer.
     clusters.use(); // Use the raymarched shader program.
-
-    // Uniform Variables to the Fragment Shader:
-    clusters.uniform("clusterPos", clusterPos)
-    .uniform("maxSteps", maxSteps)
-    .uniform("stepSize", stepSize)
-    .uniform("boxMin", Vec3f(-1))  // A bounding box will limit raycasting within this area, give it the minimum.
-    .uniform("boxMax", Vec3f(1)) // And the maximum.
-
-    // Uniform Variables to the Vertex Shader:
-    // **What's going on with these inverse matricies?**
-    .uniform("focal_length", g.lens().focalLength()) // Focal length of the lens.
+    clusters
+    .uniform("foc_len", g.lens().focalLength()) // Focal length of the lens.
     .uniform("eye_sep", g.lens().eyeSep() * g.eye() / 2.0f) // Eye separation.
     .uniform("al_ProjMatrixInv", Matrix4f::inverse(g.projMatrix())) // Pass the inverse projection matrix to the shader.
     .uniform("al_ViewMatrixInv", Matrix4f::inverse(g.viewMatrix())) // Pass the inverse view matrix to the shader.
     .uniform("al_ModelMatrixInv", Matrix4f::inverse(g.modelMatrix())); // Pass the inverse model matrix to the shader.
-
     quad.draw(); // Draw the quad mesh displaying the raymarched scene.
   }
 

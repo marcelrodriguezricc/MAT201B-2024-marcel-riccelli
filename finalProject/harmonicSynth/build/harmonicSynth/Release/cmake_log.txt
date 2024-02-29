@@ -13,5 +13,5 @@
 -- Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE) 
 -- Using libsndfile: /opt/homebrew/lib/libsndfile.dylib
 -- Configuring done (0.3s)
--- Generating done (0.2s)
+-- Generating done (0.1s)
 -- Build files have been written to: /Users/marcel/Desktop/AlloLib/allolib_playground/MAT201B-2024-marcel-riccelli/finalProject/harmonicSynth/build/harmonicSynth/Release
