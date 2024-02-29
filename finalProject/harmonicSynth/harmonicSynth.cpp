@@ -58,13 +58,16 @@ struct RayApp : public DistributedAppWithState<State> {
 
   // GUI Parameters:
   ControlGUI *gui; // GUI for controlling uniform parameters.
-  Parameter orbitSpeed{"orbitSpeed", "Clusters", 0.1, 0.0, 10.0}; // The position of the cluster.
-  Parameter fundamental{"Fundamental", "Oscillators", 220.0, 20.0, 20000.0}; // The fundamental frequency of the sine wave synthesizer.
-  Parameter eyeSep{"Eye Separation", "Raymarching", 0.02, 0., 0.5};
-  Parameter focalLength{"Focal Length", "Raymarching", 0.02, 0., 0.5};
-  Parameter lightPos{"Light Position", "Raymarching", 0.02, 0., 0.5};
-  Parameter specular{"Specular", "Raymarching", 0.5, 0., 2.0};
-  Parameter diffusion{"Diffusion", "Raymarching", 0.05, 0., 0.5};
+  Parameter clusterPosX{"Cluster Position X", "Clusters", 0.0, -50.0, 50.0};
+  Parameter clusterPosY{"Cluster Position Y", "Clusters", 0.0, -50.0, 50.0};
+  Parameter clusterPosZ{"Cluster Position Z", "Clusters", 0.0, -50.0, 50.0};
+  // Parameter orbitSpeed{"orbitSpeed", "Clusters", 0.1, 0.0, 10.0}; // The position of the cluster.
+  // Parameter fundamental{"Fundamental", "Oscillators", 220.0, 20.0, 20000.0}; // The fundamental frequency of the sine wave synthesizer.
+  // Parameter eyeSep{"Eye Separation", "Raymarching", 0.02, 0., 0.5};
+  // Parameter focalLength{"Focal Length", "Raymarching", 0.02, 0., 0.5};
+  // Parameter lightPos{"Light Position", "Raymarching", 0.02, 0., 0.5};
+  // Parameter specular{"Specular", "Raymarching", 0.5, 0., 2.0};
+  // Parameter diffusion{"Diffusion", "Raymarching", 0.05, 0., 0.5};
 
   std::shared_ptr<CuttleboneDomain<State>> cuttleboneDomain; // The domain for distributing and synchronizing the app state.
 
@@ -96,10 +99,10 @@ struct RayApp : public DistributedAppWithState<State> {
   if (isPrimary()) {
     auto guiDomain = GUIDomain::enableGUI(defaultWindowDomain()); // Enable the GUI.
     gui = &guiDomain->newGUI(); // Create the GUI
-    *gui << orbitSpeed << fundamental; // Assign our parameters to the GUI.
+    *gui << clusterPosX << clusterPosY << clusterPosZ; // Assign our parameters to the GUI.
   }
 
-  parameterServer() << orbitSpeed << fundamental; // Make parameters accessible via OSC.
+  parameterServer() << clusterPosX << clusterPosY << clusterPosZ; // Make parameters accessible via OSC.
   nav().pos(0,0,5); // Set the camera position at the center of the 3D space.
   reloadShaders(); // Load the shader files.
   }  
@@ -125,9 +128,10 @@ struct RayApp : public DistributedAppWithState<State> {
   }
 
   void onDraw(Graphics &g) override {
+    Vec3f clusterPos = Vec3f(clusterPosX, clusterPosY, clusterPosZ); // Set the cluster position to the GUI parameters.
     g.clear(0); // Clear the graphics buffer.
     clusters.use(); // Use the raymarched shader program.
-    clusters
+    clusters.uniform("clusterPos", clusterPos) // Pass the position of the cluster to the shader.
     .uniform("cam_pos", nav().pos()) // Position of the camera.
     .uniform("foc_len", g.lens().focalLength()) // Focal length of the lens.
     .uniform("eye_sep", g.lens().eyeSep() * g.eye() / 2.0f) // Eye separation.

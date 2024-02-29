@@ -3,6 +3,7 @@
 // Variables rom the Application:
 uniform float time; // The time our application has been running.
 uniform vec3 cam_pos;
+uniform vec3 clusterPos;
 
 // Internal Variables:
 float step_size = 0.01; // The distance each ray of light travels per step.
@@ -48,10 +49,11 @@ float sphereSDF(vec3 center, float radius, vec3 toPoint){
 
 // The SDF of our scene:
 float scene(vec3 p){
-  float d1 = sphereSDF(vec3(-0.5, 0, 0), 0.5, p); // Sphere one.
-  float d2 = sphereSDF(vec3(0.5, 0, 0), 0.1, p); // Sphere two.
-  float d3 = sphereSDF(vec3(0, 0.5, 0), 0.1, p); // Sphere three.
-  float d4 = sphereSDF(vec3(0, -0.5, 0), 0.2, p); // Sphere four.
+  vec3 groupPos = clusterPos;
+  float d1 = sphereSDF(vec3(groupPos.x - 0.5, groupPos.y, groupPos.z), 0.5, p); // Sphere one.
+  float d2 = sphereSDF(vec3(groupPos.x + 0.5, groupPos.y, groupPos.z), 0.1, p); // Sphere two.
+  float d3 = sphereSDF(vec3(groupPos.x, groupPos.y + 0.5, groupPos.z), 0.1, p); // Sphere three.
+  float d4 = sphereSDF(vec3(groupPos.x, groupPos.y - 0.5, groupPos.z), 0.2, p); // Sphere four.
   float k = 8.0; // The smoothness coefficient of the minimum.
   float res = exp2(-k * d1) + exp2(-k * d2) + exp2(-k * d3) + exp2(-k * d4); // Calculate the smooth minimum.
   float smoothMin = -log2(res) / k; // Total distance. 
@@ -93,6 +95,9 @@ void main() {
 
   vec3 slice_min = box_min; // The minimum corner of the bounding box.
   vec3 slice_max = box_max; // The maximum corner of the bounding box.
+
+  slice_min = slice_min + clusterPos;
+  slice_max = slice_max + clusterPos;
 
   vec3 boxHit = rayBoxIntersect(slice_min, slice_max, ro, rd); // Calculate whether the ray intersects the bounding box.
 
