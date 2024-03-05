@@ -1,0 +1,4 @@
+build/
+bin/
+Release/
+.DS_Store
