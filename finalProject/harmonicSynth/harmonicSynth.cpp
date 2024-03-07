@@ -45,8 +45,11 @@ struct State {
 
 struct RayApp : public DistributedAppWithState<State> {
   // Class Declarations:
+  Nav cluster1; // Navs for the clusters.
+  Nav meta1, meta2, meta3, meta4, meta5, meta6, meta7, meta8; // Navs for the metaballs.
   VAOMesh quad; // A fullscreen quad mesh for which to color with our shader.
   ShaderProgram clusters; // The raymarched shader program.
+  float timer = 0;
     
   // Watch for changes in the shader file and reload.
   SearchPaths searchPaths; // A search path for shader files.
@@ -59,9 +62,6 @@ struct RayApp : public DistributedAppWithState<State> {
 
   // GUI Parameters:
   ControlGUI *gui; // GUI for controlling uniform parameters.
-  Parameter clusterPosX{"Cluster Position X", "Clusters", 0.0, -50.0, 50.0};
-  Parameter clusterPosY{"Cluster Position Y", "Clusters", 0.0, -50.0, 50.0};
-  Parameter clusterPosZ{"Cluster Position Z", "Clusters", 0.0, -50.0, 50.0};
   // Parameter orbitSpeed{"orbitSpeed", "Clusters", 0.1, 0.0, 10.0}; // The position of the cluster.
   // Parameter fundamental{"Fundamental", "Oscillators", 220.0, 20.0, 20000.0}; // The fundamental frequency of the sine wave synthesizer.
   // Parameter eyeSep{"Eye Separation", "Raymarching", 0.02, 0., 0.5};
@@ -76,6 +76,8 @@ struct RayApp : public DistributedAppWithState<State> {
 		searchPaths.addAppPaths(); // Add the app's paths to the search path.
     searchPaths.addRelativePath("../shaders", true); // Add the shaders directory to the search path.
     searchPaths.print(); // Print the search paths.
+    cluster1.pos(0.0, 0.0, -5.0);
+    cluster1.smooth(1.0);
   }
 
   // When creating the app:
@@ -99,11 +101,11 @@ struct RayApp : public DistributedAppWithState<State> {
   if (isPrimary()) {
     auto guiDomain = GUIDomain::enableGUI(defaultWindowDomain()); // Enable the GUI.
     gui = &guiDomain->newGUI(); // Create the GUI
-    *gui << clusterPosX << clusterPosY << clusterPosZ; // Assign our parameters to the GUI.
+    // *gui << clusterPosX << clusterPosY << clusterPosZ; // Assign our parameters to the GUI.
   }
 
-  parameterServer() << clusterPosX << clusterPosY << clusterPosZ; // Make parameters accessible via OSC.
-  nav().pos(0,0,5); // Set the camera position at the center of the 3D space.
+  // parameterServer() << clusterPosX << clusterPosY << clusterPosZ; // Make parameters accessible via OSC.
+  nav().pos(0.0 , 0.0, 0.1); // Set the camera position at the center of the 3D space.
   reloadShaders(); // Load the shader files.
   }  
 
@@ -114,6 +116,7 @@ struct RayApp : public DistributedAppWithState<State> {
 
   // Animate loop, here we'll watch for changes in the shader files and the camera pose:
   void onAnimate(double dt) override {
+
     // Watch for changes in the shader files, and update accordingly:
     if (watchCheck()) { // If the shader files have been modified...
       printf("shader files changed, reloading..\n"); // Print a message stating that the files have been changed.
@@ -125,13 +128,19 @@ struct RayApp : public DistributedAppWithState<State> {
     } else { // If the app is not the primary instance...
       nav().set(state().pose); // Set the camera's pose to the state's pose.
     }
+
+    timer += 0.01;
+    float radius = 5.0;
+    float orbitX = radius * sin(timer);
+    float orbitY = radius * cos(timer);
+    cluster1.pos(orbitX, 0.0, orbitY);
+    std::cout << cluster1.pos() << std::endl;
   }
 
   void onDraw(Graphics &g) override {
-    Vec3f clusterPos = Vec3f(clusterPosX, clusterPosY, clusterPosZ); // Set the cluster position to the GUI parameters.
     g.clear(0); // Clear the graphics buffer.
     clusters.use(); // Use the raymarched shader program.
-    clusters.uniform("clusterPos", clusterPos) // Pass the position of the cluster to the shader.
+    clusters.uniform("clusterPos", cluster1.pos()) // Pass the position of the cluster to the shader.
     .uniform("cam_pos", nav().pos()) // Position of the camera.
     .uniform("foc_len", g.lens().focalLength()) // Focal length of the lens.
     .uniform("eye_sep", g.lens().eyeSep() * g.eye() / 2.0f) // Eye separation.
