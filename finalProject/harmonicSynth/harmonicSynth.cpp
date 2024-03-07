@@ -33,6 +33,7 @@
 #include "al/app/al_GUIDomain.hpp" // GUI.
 #include "al/ui/al_ParameterGUI.hpp" // Parameters to GUI.
 #include "al_ext/statedistribution/al_CuttleboneDomain.hpp" // For distributing state across multiple machines in AlloSphere.
+#include "al_ext/statedistribution/al_CuttleboneStateSimulationDomain.hpp"
 
 using namespace al;
 
@@ -69,8 +70,6 @@ struct RayApp : public DistributedAppWithState<State> {
   // Parameter specular{"Specular", "Raymarching", 0.5, 0., 2.0};
   // Parameter diffusion{"Diffusion", "Raymarching", 0.05, 0., 0.5};
 
-  std::shared_ptr<CuttleboneDomain<State>> cuttleboneDomain; // The domain for distributing and synchronizing the app state.
-
   // When initializing the app:
   void onInit() override {
     searchPaths.addSearchPath(".", false); // Add the current directory to the search path.
@@ -81,11 +80,12 @@ struct RayApp : public DistributedAppWithState<State> {
 
   // When creating the app:
   void onCreate() override {
-  cuttleboneDomain = CuttleboneDomain<State>::enableCuttlebone(this); // Enable Cuttlebone.
-  if (!cuttleboneDomain) { // If Cuttlebone could not be enabled...
-    std::cerr << "ERROR: Could not start Cuttlebone" << std::endl; // Print an error message.
-    quit(); // Quit the app.
-  }
+    auto cuttleboneDomain =
+      CuttleboneStateSimulationDomain<State>::enableCuttlebone(this);
+    if (!cuttleboneDomain) {
+      std::cerr << "ERROR: Could not start Cuttlebone. Quitting." << std::endl;
+      quit();
+    }
 
   // Initialize the quad mesh which will display the raymarched scene.
   quad.primitive(Mesh::TRIANGLE_STRIP); // Set the primitive type to triangle strip.
