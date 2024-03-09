@@ -1,9 +1,18 @@
-// TO DO:
-// 1. Create a spherical triangle strip mesh.
-// 2. Aggregate the vertices which form each triangular face.
-// 3. Find average of vertices to get center of mesh.
-// 4. Draw initial curve from center to center.
+// Space Filling Curve:
+// 1. Start with a spherical mesh.
+// - Apply golden ratio to evenly distribute points on the sphere's surface.
+// - Draw lines based on three nearest neighbors for each point to create the mesh.
 
+// 2. Apply dual of simplest subdivision. Label these new edges "new."
+// - Find four nearest neighbors to each vertex.
+//
+// 3. Reinsert old edges to create triangles. Label these old edges "old."
+//
+// 4. Find curve control vertices at center of each triangle through averaging of vertices.
+//
+// 5. Connect center points of triangles along the "new" edges to begin creating the curve mesh.
+//
+// 6. If an old edge is between two separate curves, flip it to instead connect the other two vertices of the new edge it lies between, and recalculate the curve.
 
 // AlloLib Libraries:
 #include "al/app/al_App.hpp" // App library.
@@ -16,60 +25,65 @@ using namespace std;// "std" namespace.
 #define PI 3.14159265
 #define TWO_PI 3.14159265 * 2
 
-float rate = 0.1;
-float radius = 5.0;
-const int numTravelers = 6;
-float timer, timer2 = 0.0;
-
-Vec3f p1, p2, p3;
+const int numVertices = 500;
+Vec3f sphereVertices[numVertices];
 
 struct MyApp : public App {
-  Mesh normalMesh, sphereMesh, curveMesh;
+  Mesh oldMesh, newMesh, curveMesh; // The original mesh, the subdivided mesh, and the final curve to be displayed.
 
   void onCreate() override {
-    normalMesh.primitive(Mesh::LINES);
+    oldMesh.primitive(Mesh::LINES);
     nav().pos(0, 0, 0);
-    addIcosphere(sphereMesh, 1, 1);
-    int numVertices = sphereMesh.vertices().size();
-    for (int i = 0; i < numVertices; i++) {
-      sphereMesh.color(HSV(float(i) / numVertices, 0.3, 1));
+
+    // 1. Create a Spherical Mesh:
+    // Apply golden ratio to evenly distribute points on the sphere's surface:
+    for(int i = 0; i < numVertices; i++){
+      float theta = acos(1 - 2 * float(i) / numVertices); // Calculate angles based on point number to be equally distributed along sphere's surface.
+      float phi = PI * (1 + sqrt(5)) * float(i); // The golden ratio.
+      sphereVertices[i] = Vec3f(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta)); // Calculate the point on the sphere's surface.
     }
-    sphereMesh.generateNormals();
-    sphereMesh.createNormalsMesh(normalMesh, 0.1, true);
-    auto normalVert = normalMesh.vertices();
-    for (int i = 0; i < normalVert.size(); i++) {
-      if (i % 2 == 0) {
-        curveMesh.vertex(normalVert[i]);
-        cout << i << endl;
+
+    // Draw lines based on three nearest neighbors for each point to create the mesh:
+    for (int i = 0; i < numVertices; i++){
+      oldMesh.vertex(sphereVertices[i]);
+      oldMesh.color(HSV(float(i) / numVertices, 1.0, 1.0));
+      float dist = 0.0; // Initialize the distance.
+      float nearest1 = 5.0; // Initialize the nearest neighbor.
+      Vec3f p1, p2, p3;
+      for (int j = i + 1; j < numVertices; j++){
+        dist = (sphereVertices[i] - sphereVertices[j]).mag();
+        if (dist < nearest1) {
+          nearest1 = dist;
+          p1 = sphereVertices[j];
+        }
       }
+      oldMesh.vertex(p1);
     }
-  };
+
+    // 2. Apply simplest subdivision to obtain new mesh:
+    // Find four nearest neighbors to each vertex:
+    int numVertices = oldMesh.vertices().size();
+  }
 
   void onAnimate(double dt) override{
-        // timer += rate;
-        // timer2 += rate * 1.125;
-        //mesh.vertex(x, y, z);
-        // x = radius * cos(timer2) * sin(timer);
-        // y = radius * sin(timer2) * sin(timer);
-        // z = radius * cos(timer);
-        // mesh.vertex(x, y, z);
   }
 
   // Draw Graphics to Screen:
   void onDraw(Graphics& g) override {
-    static Light light;
+    static Light light; // Create a light named light.
     g.clear(0); // Clear the graphics buffer.
-    g.polygonMode(true ? GL_LINE : GL_FILL); // Make the mesh wireframe.
-    //g.draw(normalMesh); // Draw the mesh.
-    //g.draw(curveMesh); // Draw the mesh.
+   
+    // Establish lighting for scene:
     light.pos(0, 0, 0);
     gl::depthTesting(true);
     g.lighting(true);
     g.light(light);
     light.ambient(HSV(1.0, 0.0, 1.0));
+
+    // Draw mesh to scene:
+    g.polygonMode(true ? GL_LINE : GL_FILL); // Make the mesh wireframe.
     g.meshColor();
-    g.draw(sphereMesh);
-    
+    g.draw(oldMesh);
   }
 };
 
